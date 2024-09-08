@@ -1,0 +1,36 @@
+name: Deploy to AWS Lambda check-air
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "19"
+
+      - name: Configurate AWS Credentials
+        uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a # v4.0.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package and deploy to AWS Lambda
+        run: |
+          zip -r function.zip .
+          aws lambda update-function-code \
+            --function-name check-air \
+            --zip-file fileb://function.zip \
