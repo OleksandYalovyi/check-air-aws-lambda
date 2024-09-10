@@ -14,19 +14,27 @@ export const handler = async () => {
     "https://api.waqi.info/feed/geo:50.0438719;19.9907768/?token=4c2de55087433a8c208a462a3da340e45dae14b7"
   );
 
-  const aqiRes = res.data;
+  const aqicnRes = res.data;
+  const aqicnInd = aqicnRes.data.aqi;
+  const forecastAqicnPm25 = aqicnRes.data.forecast.daily.pm25[0].avg;
 
-  console.log("status", aqiRes.status);
-  console.log("aqi", aqiRes.data.aqi);
-  console.log("idx", aqiRes.data.idx);
+  console.log("aqicnAqi", aqicnInd);
+  console.log("forecastAqicnPm25", forecastAqicnPm25);
 
-  if (aqiRes.data.aqi <= 50 || aqiRes.data.forecast.daily.pm25[0].avg <= 50) {
+  const openWeatherRes = await axios.get(
+    "http://api.openweathermap.org/data/2.5/air_pollution?lat=50.0438719&lon=19.9907768&appid=fde1ce566b00af07578dfdb4a3a153b0"
+  );
+  const openWeatherInd = openWeatherRes.data.list[0].main.aqi;
+  console.log("openWeatherInd", openWeatherInd);
+
+  if ((aqicnInd <= 50 || forecastAqicnPm25 <= 50) && openWeatherInd === 1) {
     await sendMsgToBot(
       `It's a good day for a walk!\n` +
-        `Air quality index by aqicn ${aqiRes.data.aqi}\n` +
-        `Rest data: pm25 ${aqiRes.data.iaqi.pm25.v}, pm10 ${aqiRes.data.iaqi.pm10.v}\n` +
-        `Forecast daily pm25: ${aqiRes.data.forecast.daily.pm25[0].avg}\n` +
-        "Index description: https://aqicn.org/scale/",
+        `Air quality index by aqicn ${aqicnRes.data.aqi}\n` +
+        `Rest data: pm25 ${aqicnRes.data.iaqi.pm25.v}, pm10 ${aqicnRes.data.iaqi.pm10.v}\n` +
+        `Forecast daily pm25: ${forecastAqicnPm25}\n` +
+        "Index description: https://aqicn.org/scale/ \n" +
+        `Open weather index: ${openWeatherInd}`,
       process.env.CHAT_ID
     );
   }
